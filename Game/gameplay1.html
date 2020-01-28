@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Josefin+Sans&display=swap" rel="stylesheet">
+    <style>
+        * {
+            padding: 0px;
+            margin: 0px;
+            font-family: 'Josefin Sans', sans-serif;
+        }
+
+        .carGame {
+            width:100%;
+            height: 100vh;
+            background: url("https://images.pexels.com/photos/9283/landscape-nature-sky-blue.jpg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940");
+            background-repeat: no-repeat;
+            background-size: 100% 100%;
+        }
+        
+        .hide {
+            display: none;
+        }
+
+        .car {
+            width: 50px;
+            height: 80px;
+            position: absolute;
+            background-image: url('http://images.clipartpanda.com/car-clipart-top-view-red-car-top-view-hi.png');
+            bottom: 120px;
+            background-repeat: no-repeat;
+            background-size: 100% 100%;
+            
+            z-index: 1;
+            
+        }
+
+        .gameAera {
+            width: 400px;
+            height: 100vh;
+            background: #2f3640;
+            margin: auto;
+            overflow: hidden;
+            position: relative;
+            border-right: 7px dashed #c8d6e5;
+            border-left: 7px dashed #c8d6e5; 
+        }
+
+        .lines {
+            width: 10px;
+            height: 100px;
+            background: white;
+            margin-left: 195px;
+            position: absolute;
+        }
+
+        .enemy {
+            width: 50px;
+            height: 70px;
+            position: absolute;
+            background-repeat: no-repeat;
+            background-size: 100% 100%;
+            
+            z-index: 1;
+            bottom: 120px;
+           
+        }
+        .score {
+            position: absolute;
+            top: 300px;
+            left: 40px;
+            background-color: green;
+            width: 300px;
+            height: 100px;
+            text-align: center;
+            color:white;
+            font-size: 40px;
+            
+            box-shadow: 0 5px 5px #777;
+            line-height: 70px;
+        }
+        .startScreen {
+            position: absolute;
+            top:50%;
+            left:50%;
+           transform: translate(-50%,-50%);
+            background:#ee5253;
+            color:white;
+            text-align: center;
+            border : 1px solid #ff6b6b;
+            padding:15px;
+            margin:auto;
+            z-index: 2;
+            width: 50%;
+            cursor: pointer;
+            
+            letter-spacing: 5;
+            word-spacing: 3;
+            font-size: 20px;
+            line-height: 30px;
+            text-transform: uppercase;
+            box-shadow: 0 5px 5px #777;
+            text-shadow: 0 2px 2px black;
+
+        }
+    </style>
+</head>
+
+<body>
+    <div class="carGame">
+        <div class="score"></div>
+        <div class="startScreen">
+            <p>Press here to start<br>
+                Arrow key to move<br>
+                If you hit another car you will lose
+            </p>
+        </div>
+    
+        <div class="gameAera ">
+            
+        </div>
+    </div>
+
+
+    <script>
+
+        //Select the elements
+
+        const hitsound = new Audio('/sounds/crash.mp3');
+        const carSound = new Audio('/sounds/gt4.mp3') 
+       
+        //Enemy cars Array
+        let enemyCarColors = ['https://i.ya-webdesign.com/images/cartoon-tank-cannon-png-5.png','https://clipartart.com/images/car-clipart-green-15.png','http://pluspng.com/img-png/car-png-top-view-png-hatchback-car-top-view-png-clipart-1092.png'];
+       
+        const score = document.querySelector(".score");
+        const startScreen = document.querySelector(".startScreen")
+        const gameAera = document.querySelector(".gameAera")
+
+        score.classList.remove('score');
+        startScreen.addEventListener("click", start);
+        //Player object..
+        let player = { speed: 5, score : 0 };
+
+      
+        //Keys true or false
+        let keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false
+        }
+
+
+        //Select the keys
+        document.addEventListener('keydown', keydown);
+        document.addEventListener('keyup', keyup);
+
+        function keydown(e) {
+            e.preventDefault();
+            keys[e.key] = true;
+         //   console.log(e.key);
+         //   console.log(keys);
+        }
+
+        function keyup(e) {
+            e.preventDefault();
+            keys[e.key] = false;
+        //    console.log(e.key)
+         //   console.log(keys)
+        }
+        
+        
+        
+        //Car hit function...
+
+        function iscollide(a,b) {
+            bReact = a.getBoundingClientRect();
+            aReact = b.getBoundingClientRect();
+
+            return !((aReact.bottom < bReact.top) || (aReact.top > bReact.bottom) || (aReact.right < bReact.left) || (aReact.left > bReact.right));
+
+        }
+
+        //  moveLines function define..
+
+        function moveLines() {
+            let lines = document.querySelectorAll(".lines");
+
+            lines.forEach(line => {
+               
+                //this statement for the line continously iterate...
+                if (line.y >= 700) {
+                    line.y -= 750;
+                }
+
+                line.y += player.speed;
+                line.style.top = line.y + "px";
+            })
+
+        }
+
+        //function endGame define ...
+        function endGame () {
+           carSound.pause();
+            hitsound.play();
+            player.start = false;
+            
+            startScreen.classList.remove('hide');
+            startScreen.innerHTML = `GAME OVER<br>Your Score : <i style="color:blue; font-size:30px">${player.score+1}
+            </i>
+            <br>Click Here to Restart`
+        }
+
+
+
+        function moveEnemy(car) {
+            let enemy = document.querySelectorAll(".enemy");
+
+            enemy.forEach(item => {
+               
+               //If the enemy car hit the our car then ...
+                if(iscollide(car,item)) {
+                  //  console.log('BOOOM HI');
+                //function for endGame()
+                endGame();
+               // location.reload();
+                    
+                
+              }
+                //this statement for the Cars continously iterate...
+                if (item.y >= 750) {
+                    item.y = -300;
+                    item.style.left = Math.floor(Math.random() * 350) + 'px';
+                }
+
+                item.y += player.speed;
+                item.style.top = item.y + "px";
+            })
+
+        }
+
+
+
+
+        function gamePlay() {
+
+            let car = document.querySelector('.car');
+            //toGet all the properties of the div (width,height,x,y etc);
+            let road = gameAera.getBoundingClientRect();
+            // console.log(road)
+            //if user press the key then we add functionality..
+
+           
+           
+            if (player.start) {
+              carSound.play();
+              
+                moveEnemy(car);
+                moveLines();
+                if (keys.ArrowUp && player.y > (road.top + 70)) { player.y -= player.speed }
+                if (keys.ArrowDown && player.y < (road.bottom - 85)) { player.y += player.speed }
+                if (keys.ArrowLeft && player.x > 0) { player.x -= player.speed }
+                if (keys.ArrowRight && player.x < (road.width - 50)) { player.x += player.speed }
+                //It move dynamaclly the direction of the div(car ) top and lefe with the arrows key..
+                car.style.top = `${player.y}px`;
+                car.style.left = `${player.x}px`;
+                //we have to write the line again for continous running the function
+                window.requestAnimationFrame(gamePlay)
+                //console.log(player.score++);
+                player.score++;
+                score.innerText = `Score is : ${player.score}`;
+                
+                //speed incress with score incress
+               
+                if(player.score ===300){
+                player.speed = 7;
+            }else if(player.score ===700){
+                player.speed=8;
+            }else if( player.score ===1200){
+                player.speed=9;
+            }else if( player.score ===1700){
+            player.speed=10;
+            }else if( player.score ===2000){
+            player.speed=11;
+            }else if( player.score ===2200){
+            player.speed=12;
+            }else if( player.score ===2500)
+            player.speed=13;
+            }
+        }
+
+      
+
+       
+       
+        function start() {
+            
+            //hide class remove and add
+            
+          // gameAera.classList.remove('hide');
+           
+            startScreen.classList.add('hide')
+            gameAera.innerHTML = "";
+            //continous running funciton
+            player.start = true;
+            
+            score.classList.add('score');
+           player.speed =5;
+            player.score = 0;
+            
+            window.requestAnimationFrame(gamePlay);
+
+            //Create a another div ...for the road enemy
+            //for loop for create multiples lines for the road...
+            for (let x = 0; x < 5; x++) {
+                let roadLine = document.createElement('div');
+                roadLine.setAttribute('class', 'lines');
+                roadLine.y = (x * 150);
+                roadLine.style.top = (x * 150) + "px";  //each div have '150px' difference from the Top....
+                gameAera.appendChild(roadLine);
+               
+        
+            }
+        
+
+        //create a div for the Car
+        let car = document.createElement('div');
+        car.setAttribute('class', 'car');
+        gameAera.append(car);
+        //add the offset of div into player object dynamically...
+        player.x = car.offsetLeft;
+        player.y = car.offsetTop;
+
+        //  console.log(player)
+
+       //Create Enemry cars 
+        for (let x = 0; x < 3; x++) {
+            let enemyCar = document.createElement('div');
+            enemyCar.setAttribute('class', 'enemy');
+            enemyCar.y = ((x + 1) * 350) * -1;
+            enemyCar.style.top = (x * 150) + "px";  //each div have '150px' difference from the Top....
+            gameAera.appendChild(enemyCar);
+         //   enemyCar.style.background = 'green'
+           let rnumber = Math.floor(Math.random()*3);
+            console.log(enemyCarColors[rnumber])
+            enemyCar.style.backgroundImage = `url("${enemyCarColors[rnumber]}")`;
+            
+            
+            enemyCar.style.left = Math.floor(Math.random() * 350) + 'px';
+        }
+
+
+    }
+
+    </script>
+</body>
+
+</html>
